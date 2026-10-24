@@ -11,4 +11,9 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+  namespace :admin do
+    resources :users, only: [:index]
+  end
+
+  root to: redirect("/admin/users")
 end

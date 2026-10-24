@@ -1,9 +1,36 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# db/seeds.rb
+User.destroy_all
+
+users = [
+  ["Priya",    "Raman",      "admin"],
+  ["Marcus",   "Johnson",    "admin"],
+  ["Elena",    "Petrova",    "editor"],
+  ["Tomás",    "Alvarez",    "editor"],
+  ["Aisha",    "Khan",       "viewer"],
+  ["Daniel",   "O'Connor",   "viewer"],
+  ["Mei",      "Zhang",      "editor"],
+  ["Oluwaseun","Adeyemi",    "viewer"],
+  ["Sofia",    "Rossi",      "viewer"],
+  ["Liam",     "Fischer",    "editor"],
+  ["Hannah",   "Berg",       "viewer"],
+  ["Rahul",    "Mehta",      "admin"],
+  ["Chloe",    "Dubois",     "viewer"],
+  ["Kenji",    "Watanabe",   "editor"],
+  ["Fatima",   "Al-Sayed",   "viewer"],
+  ["Noah",     "Williams",   "viewer"],
+  ["Isabella", "Costa",      "editor"],
+  ["Gabriel",  "Nowak",      "viewer"]
+]
+
+users.each_with_index do |(first, last, role), i|
+  User.create!(
+    first_name: first,
+    last_name:  last,
+    email:      "#{first}.#{last}".downcase.gsub(/[^a-z.]/, "") + "@example.com",
+    role:       role,
+    # Spread logins over the last ~60 days; leave one user who has never logged in
+    last_login_at: i == 16 ? nil : (i * 3 + rand(1..48)).hours.ago - (i * 2).days
+  )
+end
+
+puts "Seeded #{User.count} users."
