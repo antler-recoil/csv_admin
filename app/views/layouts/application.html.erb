@@ -23,9 +23,101 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
-    </main>
-  </body>
+  <body class="bg-[#FAFAFC] text-slate-900 antialiased"
+      style="font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', ui-sans-serif, system-ui, sans-serif;">
+  <%
+    sections = {
+      "General" => [[:layout, "Dashboard"], [:users, "Users"], [:swap, "Payment"], [:message, "Message", "8"]],
+      "Tools"   => [[:bag, "Product"], [:doc, "Invoice"], [:trend, "Analytics"], [:sparkles, "Automation", "BETA"]],
+      "Support" => [[:settings, "Settings"], [:shield, "Security"], [:help, "Help"]]
+    }
+  %>
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sticky top-0 hidden h-screen w-[264px] flex-shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
+
+      <div class="flex h-[72px] items-center justify-between border-b border-slate-200 px-6">
+        <div class="flex items-center gap-2 text-[#5347CE]">
+          <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h11L7 18h11"/></svg>
+          <span class="text-2xl font-semibold tracking-tight">Company</span>
+        </div>
+        <button class="rounded-lg border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50">
+          <%= icon :collapse, css: "h-4 w-4" %>
+        </button>
+      </div>
+
+      <nav class="flex-1 divide-y divide-slate-200 overflow-y-auto">
+        <% sections.each do |title, items| %>
+          <div class="px-4 py-5">
+            <p class="px-3 pb-2 text-xs font-medium uppercase tracking-wide text-slate-400"><%= title %></p>
+            <div class="space-y-1">
+              <% items.each do |ico, label, badge| %>
+                <% active = label == "Users" %>
+                <a href="<%= active ? '/admin/users' : '#' %>"
+                   class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] <%= active ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>">
+                  <%= icon ico, css: "h-[18px] w-[18px]" %>
+                  <%= label %>
+                  <% if badge %>
+                    <span class="ml-auto rounded-md px-2 py-0.5 text-xs font-medium <%= badge == 'BETA' ? 'bg-[#EEEBFF] text-[#5347CE]' : 'border border-slate-200 text-slate-700' %>">
+                      <%= badge %>
+                    </span>
+                  <% end %>
+                </a>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </nav>
+
+      <div class="space-y-3 px-4 pb-4">
+        <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#16C8C7] text-white">
+            <%= icon :sparkles, css: "h-5 w-5" %>
+          </span>
+          <div class="flex-1 leading-tight">
+            <p class="text-xs text-slate-500">Team</p>
+            <p class="text-[15px] font-medium text-slate-900">Marketing</p>
+          </div>
+          <span class="text-slate-400"><%= icon :updown, css: "h-4 w-4" %></span>
+        </div>
+        <button class="w-full rounded-lg border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+          Upgrade Plan
+        </button>
+      </div>
+
+      <p class="border-t border-slate-200 py-5 text-center text-xs text-slate-500">© 2026 Company</p>
+    </aside>
+
+    <!-- Main column -->
+    <div class="flex min-w-0 flex-1 flex-col">
+      <header class="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-slate-200 bg-white px-8">
+        <div class="relative hidden md:block">
+          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"><%= icon :search, css: "h-[18px] w-[18px]" %></span>
+          <input type="text" placeholder="Search"
+                 class="w-[360px] rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-20 text-sm placeholder:text-slate-500 focus:border-[#5347CE] focus:outline-none focus:ring-2 focus:ring-[#5347CE]/15">
+          <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-500">⌘ + F</span>
+        </div>
+
+        <div class="ml-auto flex items-center gap-1.5">
+          <button class="rounded-lg p-2 text-slate-500 hover:bg-slate-50"><%= icon :gift %></button>
+          <button class="rounded-lg p-2 text-slate-500 hover:bg-slate-50"><%= icon :bell %></button>
+          <button class="rounded-lg p-2 text-slate-500 hover:bg-slate-50"><%= icon :plus %></button>
+          <span class="mx-3 h-8 w-px bg-slate-200"></span>
+          <div class="flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#887CFD] to-[#5347CE] text-sm font-medium text-white">PR</span>
+            <div class="hidden leading-tight sm:block">
+              <p class="text-sm font-medium text-slate-900">John Doe</p>
+              <p class="text-xs text-slate-500">Business</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 px-8 py-8 xl:px-10">
+        <%= yield %>
+      </main>
+    </div>
+  </div>
+</body>
 </html>

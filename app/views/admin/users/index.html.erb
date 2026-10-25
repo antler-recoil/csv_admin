@@ -1,47 +1,198 @@
-<div class="min-h-screen bg-gray-50">
-  <div class="mx-auto max-w-6xl px-6 py-10">
+<%
+  users     = @users.to_a
+  week_ago  = 7.days.ago
+  active_ct = users.count { |u| u.last_login_at && u.last_login_at > week_ago }
+  never_ct  = users.count { |u| u.last_login_at.nil? }
 
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Users</h1>
-        <p class="mt-1 text-sm text-gray-500">
-          <%= pluralize(@users.size, "user") %> registered
-        </p>
+  roles = {
+    "admin"  => { dot: "bg-[#5347CE]", hex: "#5347CE" },
+    "editor" => { dot: "bg-[#4896FE]", hex: "#4896FE" },
+    "viewer" => { dot: "bg-[#16C8C7]", hex: "#16C8C7" }
+  }
+  role_counts = roles.keys.index_with { |r| users.count { |u| u.role == r } }
+
+  kpis = [
+    { label: "Total Users",      icon: :users,   value: users.size, delta: "15.8%", up: true,  good: true  },
+    { label: "Active This Week", icon: :user_ok, value: active_ct,  delta: "24.2%", up: true,  good: true  },
+    { label: "Never Logged In",  icon: :user_x,  value: never_ct,   delta: "34.0%", up: false, good: false }
+  ]
+
+  weekdays = [["Sun", 56], ["Mon", 88], ["Tue", 150], ["Wed", 52], ["Thu", 112], ["Fri", 88], ["Sat", 128]]
+%>
+
+<!-- Page header -->
+<div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+  <h1 class="text-[28px] font-medium tracking-tight text-slate-900">Users</h1>
+
+  <div class="flex items-center gap-3 text-sm text-slate-700">
+    <div class="inline-flex divide-x divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <button class="inline-flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"><%= icon :calendar, css: "h-4 w-4" %> Oct 18 - Nov 18</button>
+      <button class="inline-flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50">Monthly <%= icon :chevron, css: "h-4 w-4" %></button>
+    </div>
+    <button class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 shadow-sm hover:bg-slate-50">
+      <%= icon :filter, css: "h-4 w-4" %> Filter
+    </button>
+  </div>
+</div>
+
+<!-- KPI cards -->
+<div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+  <% kpis.each do |k| %>
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%= icon k[:icon], css: "h-[18px] w-[18px]" %></span>
+          <p class="text-base text-slate-700"><%= k[:label] %></p>
+        </div>
+        <span class="text-slate-400"><%= icon :info, css: "h-[18px] w-[18px]" %></span>
+      </div>
+      <div class="mt-5 flex items-center gap-3">
+        <p class="text-[34px] font-medium leading-none tracking-tight text-slate-900"><%= k[:value] %></p>
+        <span class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium <%= k[:good] ? 'border-teal-200 bg-teal-50 text-teal-600' : 'border-rose-200 bg-rose-50 text-rose-500' %>">
+          <%= k[:delta] %> <%= icon (k[:up] ? :arrow_up : :arrow_dn), css: "h-3 w-3" %>
+        </span>
       </div>
     </div>
+  <% end %>
+</div>
 
-    <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">ID</th>
-            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Email</th>
-            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Role</th>
-            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Last Login</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          <% @users.each do |user| %>
-            <tr class="hover:bg-gray-50">
-              <td class="px-6 py-4 text-sm text-gray-500"><%= user.id %></td>
-              <td class="px-6 py-4 text-sm font-medium text-gray-900"><%= user.full_name %></td>
-              <td class="px-6 py-4 text-sm text-gray-600"><%= user.email %></td>
-              <td class="px-6 py-4 text-sm">
-                <% badge = { "admin" => "bg-purple-100 text-purple-700",
-                             "editor" => "bg-blue-100 text-blue-700",
-                             "viewer" => "bg-gray-100 text-gray-700" }[user.role] %>
-                <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium <%= badge %>">
-                  <%= user.role.capitalize %>
+<!-- Charts row -->
+<div class="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+
+  <!-- Users by role -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] xl:col-span-2">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%= icon :trend, css: "h-[18px] w-[18px]" %></span>
+        <p class="text-base text-slate-700">Users by Role</p>
+      </div>
+      <button class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+        Monthly <%= icon :chevron, css: "h-4 w-4" %>
+      </button>
+    </div>
+
+    <p class="mt-5 text-[34px] font-medium leading-none tracking-tight"><%= users.size %></p>
+    <p class="mt-3 flex items-center gap-2 text-sm text-slate-500">
+      <span class="inline-flex items-center gap-1 rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-600">
+        8.3% <%= icon :arrow_up, css: "h-3 w-3" %>
+      </span>
+      + 3 added this month
+    </p>
+
+    <div class="mt-8 flex h-4 gap-1 overflow-hidden rounded-full">
+      <% roles.each do |name, r| %>
+        <div class="h-full rounded-full" style="width: <%= (role_counts[name] * 100.0 / [users.size, 1].max).round(1) %>%; background: <%= r[:hex] %>;"></div>
+      <% end %>
+    </div>
+
+    <div class="mt-6 grid grid-cols-3 gap-4">
+      <% roles.each do |name, r| %>
+        <div>
+          <p class="flex items-center gap-2 text-sm text-slate-500">
+            <span class="h-3 w-1 rounded-full <%= r[:dot] %>"></span><%= name.capitalize %>s
+          </p>
+          <p class="mt-1 text-2xl font-medium tracking-tight"><%= role_counts[name] %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Weekly logins -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%= icon :users, css: "h-[18px] w-[18px]" %></span>
+        <p class="text-base text-slate-700">Weekly Logins</p>
+      </div>
+      <button class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+        Weekly <%= icon :chevron, css: "h-4 w-4" %>
+      </button>
+    </div>
+
+    <div class="mt-8 flex h-44 items-end justify-between gap-2">
+      <% weekdays.each do |day, h| %>
+        <% hot = day == "Tue" %>
+        <div class="flex flex-1 flex-col items-center justify-end gap-2">
+          <% if hot %><span class="text-xs font-medium text-slate-700">248</span><% end %>
+          <div class="w-full rounded-md <%= hot ? 'bg-gradient-to-t from-[#B9B2FB] to-[#5347CE]' : 'bg-slate-100' %>" style="height: <%= h %>px;"></div>
+        </div>
+      <% end %>
+    </div>
+    <div class="mt-3 flex justify-between gap-2 text-xs text-slate-500">
+      <% weekdays.each do |day, _| %>
+        <span class="flex-1 text-center <%= 'font-medium text-slate-900' if day == 'Tue' %>"><%= day %></span>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Users table -->
+<div class="rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+  <div class="flex items-center justify-between px-6 py-5">
+    <div class="flex items-center gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%= icon :users, css: "h-[18px] w-[18px]" %></span>
+      <p class="text-base text-slate-700">All Users</p>
+    </div>
+    <a href="#" class="text-sm font-medium text-[#5347CE] hover:underline">See All</a>
+  </div>
+
+  <div class="overflow-x-auto px-4 pb-2">
+    <table class="min-w-full">
+      <thead>
+        <tr class="bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+          <th class="w-12 rounded-l-lg px-4 py-3"><input type="checkbox" class="h-4 w-4 rounded border-slate-300 accent-[#5347CE]"></th>
+          <th class="px-4 py-3">User</th>
+          <th class="px-4 py-3">Role</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Last Login</th>
+          <th class="w-12 rounded-r-lg px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.each do |user| %>
+          <%
+            dot, label =
+              if user.last_login_at.nil?          then ["bg-slate-300", "Never logged in"]
+              elsif user.last_login_at > week_ago then ["bg-teal-500",  "Active"]
+              else                                     ["bg-amber-400", "Inactive"]
+              end
+          %>
+          <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50/60">
+            <td class="px-4 py-4"><input type="checkbox" class="h-4 w-4 rounded border-slate-300 accent-[#5347CE]"></td>
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-sm font-medium <%= avatar_classes(user) %>">
+                  <%= user.first_name[0] %><%= user.last_name[0] %>
                 </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">
-                <%= user.last_login_at ? "#{time_ago_in_words(user.last_login_at)} ago" : "Never" %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+                <div class="leading-tight">
+                  <p class="text-[15px] font-medium text-slate-900"><%= user.full_name %></p>
+                  <p class="text-sm text-slate-500"><%= user.email %></p>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-[15px] text-slate-700"><%= user.role.capitalize %></td>
+            <td class="px-4 py-4">
+              <span class="inline-flex items-center gap-2 text-[15px] text-slate-700">
+                <span class="h-2 w-2 rounded-full <%= dot %>"></span><%= label %>
+              </span>
+            </td>
+            <td class="px-4 py-4 text-[15px] text-slate-600">
+              <%= user.last_login_at ? "#{time_ago_in_words(user.last_login_at)} ago" : "—" %>
+            </td>
+            <td class="px-4 py-4 text-slate-400">
+              <button class="rounded-md p-1 hover:bg-slate-100 hover:text-slate-600"><%= icon :dots %></button>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-between border-t border-slate-200 px-6 py-4 text-sm text-slate-500">
+    <p>Showing <span class="font-medium text-slate-700">1</span> to <span class="font-medium text-slate-700"><%= users.size %></span> of <span class="font-medium text-slate-700"><%= users.size %></span> results</p>
+    <div class="flex gap-2">
+      <button class="rounded-lg border border-slate-200 px-3 py-1.5 font-medium text-slate-400" disabled>Previous</button>
+      <button class="rounded-lg border border-slate-200 px-3 py-1.5 font-medium text-slate-400" disabled>Next</button>
     </div>
   </div>
 </div>
